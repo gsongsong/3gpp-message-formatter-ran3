@@ -1,0 +1,7 @@
+{
+  "name": "3gpp-message-formatter",
+  "main": "formatter.js",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2"
+  }
+}
