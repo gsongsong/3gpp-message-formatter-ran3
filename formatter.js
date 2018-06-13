@@ -6,6 +6,12 @@ var xlsx = require('xlsx');
 module.exports = exports = format;
 
 function format(configFilename) {
+    var definitions = parse(configFilename);
+    expand(definitions);
+    return toWorkbook(definitions);
+}
+
+function parse(configFilename) {
     var definitions = {};
     // TODO: handle newline more elegantly
     var config = fs.readFileSync(configFilename, 'utf8').split('\n')
@@ -20,7 +26,7 @@ function format(configFilename) {
         let trFirst = trs.first();
         let tdTopLeft = trFirst.find('td').first();
         // NOTE: In cheerio DOM, newline is not converted into whitespace
-        if (tdTopLeft.text().match(/IE\/Group\s+Name/g) == null) {
+        if (!normalizeWhitespaces(tdTopLeft.text()).match('IE/Group Name')) {
             return true;
         }
         let sectionNumberName = config.shift().match(/(\d+(\.\d+)*)\s(.*)/);
@@ -28,7 +34,7 @@ function format(configFilename) {
         let sectionName = sectionNumberName[3];
         let header = [];
         $(trFirst).find('td').each(function (index, td) {
-            header.push($(td).text().trim());
+            header.push(normalizeWhitespaces($(td).text()));
         });
         let content = [];
         depthMax = 0;
@@ -38,7 +44,7 @@ function format(configFilename) {
             }
             let row = {};
             $(tr).children('td').each(function (index, td) {
-                let text = $(td).text().trim().replace(/\n/g, '');
+                let text = normalizeWhitespaces($(td).text());
                 if (index == 0) {
                     let matchBracket = $(td).text().match(/>/g);
                     depth = matchBracket ? matchBracket.length : 0;
@@ -59,7 +65,44 @@ function format(configFilename) {
             depthMax: depthMax,
         };
     });
+    return definitions;
+}
 
+function expand(definitions) {
+    var reReference = /[1-9]\d*(\.[1-9]\d*)+/;
+    for (let sectionNumber in definitions) {
+        let definition = definitions[sectionNumber];
+        let content = definition['content'];
+        let unexpandedFieldExists;
+        do {
+            unexpandedFieldExists = false;
+            for (let i = content.length - 1; i >= 0; i--) {
+                let item = content[i];
+                let depth = item['depth'];
+                let reference = item['IE type and reference'];
+                if (!reference) {
+                    continue;
+                }
+                let referenceMatch = reference.match(reReference);
+                if (!referenceMatch) {
+                    continue;
+                }
+                let referenceNumber = referenceMatch[0];
+                unexpandedFieldExists = true;
+                let contentToInsert = JSON.parse(JSON.stringify(
+                    definitions[referenceNumber]['content']));
+                content.splice(i, 1, ...contentToInsert);
+                for (let j = 0; j < contentToInsert.length; j++) {
+                    content[i + j]['depth'] += depth;
+                    definition['depthMax'] = Math.max(definition['depthMax'],
+                                                      content[i + j]['depth']);
+                }
+            }
+        } while (unexpandedFieldExists);
+    }
+}
+
+function toWorkbook(definitions) {
     var workbook = xlsx.utils.book_new();
     for (let sectionNumber in definitions) {
         let definition = definitions[sectionNumber];
@@ -95,6 +138,10 @@ function format(configFilename) {
             `${(`${sectionNumber} ${name}`).substring(0, 30)}`);
     }
     return workbook;
+}
+
+function normalizeWhitespaces(string) {
+    return string.trim().replace(/\n/g, '').replace(/\s{2,}/g, ' ');
 }
 
 if (require.main == module) {
