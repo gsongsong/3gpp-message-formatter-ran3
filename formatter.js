@@ -91,12 +91,13 @@ function expand(definitions) {
                 unexpandedFieldExists = true;
                 let contentToInsert = JSON.parse(JSON.stringify(
                     definitions[referenceNumber]['content']));
-                content.splice(i, 1, ...contentToInsert);
+                content.splice(i + 1, 0, ...contentToInsert);
                 for (let j = 0; j < contentToInsert.length; j++) {
-                    content[i + j]['depth'] += depth;
+                    content[i + j  +1]['depth'] += depth + 1;
                     definition['depthMax'] = Math.max(definition['depthMax'],
-                                                      content[i + j]['depth']);
+                                                content[i + j + 1]['depth']);
                 }
+                item['IE type and reference'] = null;
             }
         } while (unexpandedFieldExists);
     }
