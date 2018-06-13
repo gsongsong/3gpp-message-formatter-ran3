@@ -5,7 +5,7 @@ It formats application protocol messages into tables
 ## Dependencies
 
 ```sh
-npm install cheerio
+npm install cheerio xlsx
 ```
 
 ## Usage
