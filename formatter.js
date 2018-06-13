@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var cheerio = require('cheerio');
+var xlsx = require('xlsx');
 
 module.exports = exports = format;
 
@@ -46,7 +47,7 @@ function format(configFilename) {
                         text = text.replace(/^>+/, '');
                     }
                 }
-                row[header[index]] = text;
+                row[header[index]] = text ? text : null;
             });
             row.depth = depth;
             content.push(row);
@@ -58,14 +59,49 @@ function format(configFilename) {
             depthMax: depthMax,
         };
     });
-    return definitions;
+
+    var workbook = xlsx.utils.book_new();
+    for (let sectionNumber in definitions) {
+        let definition = definitions[sectionNumber];
+        let name = definition['name'];
+        let depthMax = definition['depthMax'];
+        let worksheet_data = [];
+        let header = [];
+        for (let item of definition['header']) {
+            header.push(item);
+        }
+        for (let i = 0; i < depthMax; i++) {
+            header.splice(1, 0, null);
+        }
+        worksheet_data.push(header);
+        for (let item of definition['content']) {
+            let row = [];
+            for (let key in item) {
+                if (key == 'depth') {
+                    continue;
+                }
+                row.push(item[key]);
+            }
+            for (let i = 0; i < depthMax - item['depth']; i++) {
+                row.splice(1, 0, null);
+            }
+            for (let i = 0; i < item['depth']; i++) {
+                row.splice(0, 0, null);
+            }
+            worksheet_data.push(row);
+        }
+        let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
+        xlsx.utils.book_append_sheet(workbook, worksheet,
+            `${(`${sectionNumber} ${name}`).substring(0, 30)}`);
+    }
+    return workbook;
 }
 
 if (require.main == module) {
-    if (process.argv.length >= 3) {
-        console.log(JSON.stringify(format(process.argv[2]), null, 2));
+    if (process.argv.length >= 4) {
+        xlsx.writeFile(format(process.argv[2]), process.argv[3]);
     } else {
-        console.log('Usage: node formatter <file_name>');
-        console.log('  ex : node formatter 38473-f10.htm');
+        console.log('Usage: node formatter <config_file_name> <outfile_name>');
+        console.log('  ex : node formatter config.example 38473-f11.xlsx');
     }
 }
