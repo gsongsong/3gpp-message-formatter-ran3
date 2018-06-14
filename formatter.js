@@ -158,6 +158,8 @@ function toWorkbook(parseResult) {
         let name = definition['name'];
         let depthMax = definition['depthMax'];
         let worksheet_data = [];
+        worksheet_data.push([name]);
+        worksheet_data.push([null]);
         let header = [];
         for (let item of definition['header']) {
             header.push(item);
