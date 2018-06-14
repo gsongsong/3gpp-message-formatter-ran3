@@ -37,17 +37,53 @@ node formatter <config_file_name> <outfile_name>
 # node formatter config.example 38473-f11.xlsx
 ```
 
-### <a id='config-example'>Example of Configuration File</a>
+### <a id='config-example'>Examples of Configuration File</a>
 
-Make sure that the number of and the order of (section number, section name) pairs and those of tables are the same
+**Key rule**: Make sure that the number of and the order of (section number, section name) pairs and those of tables are the same
 
 ```
 38473-f11.htm
 9.2.1.1	RESET
 9.2.1.2	RESET ACKNOWLEDGE
 9.2.1.3	ERROR INDICATION
-9.2.1.4	F1 SETUP REQUEST
-9.2.1.5	F1 SETUP RESPONSE
-9.2.1.6	F1 SETUP FAILURE
 (and more)
 ```
+
+#### Options
+
+`Asterisk (*)` at the end of line prevents a given message/IE from being added to workbook (i.e., no worksheet for a given message/IE will be created)
+
+```
+38473-f11.htm
+9.2.1.1	RESET
+...
+9.3.1.4	gNB-CU UE F1AP ID *
+(and more)
+```
+
+`end` keyword **at the end of a configuration file** will immediately halt a parsing process and will generate a workbook
+
+```
+36413-f10.htm
+9.1.3.1	E-RAB SETUP REQUEST
+9.1.3.2	E-RAB SETUP RESPONSE
+...
+9.2.1.1	Message Type *
+(and more)
+end
+```
+
+Be careful to use `end`:
+
+   - All content above `end` must follow the **key rule**
+   - No content after `end`
+
+## Limitations
+
+Current supported specification documents: RAN3 Application Protocol (36.4xx, 38.4xx AP series)
+
+Currently, you need to handle manually some message/IE types which refer other specification documents
+
+## Contact
+
+Bug/Issue reporting: https://github.com/gsongsong/3gpp-message-formatter/issues
