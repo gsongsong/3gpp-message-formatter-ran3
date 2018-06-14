@@ -6,13 +6,15 @@ var xlsx = require('xlsx');
 module.exports = exports = format;
 
 function format(configFilename) {
-    var definitions = parse(configFilename);
-    expand(definitions);
-    return toWorkbook(definitions);
+    var parseResult = parse(configFilename);
+    expand(parseResult);
+    return toWorkbook(parseResult);
 }
 
 function parse(configFilename) {
     var definitions = {};
+    var headersGlobal = [];
+    var headersUpper = [];
     // TODO: handle newline more elegantly
     var config = fs.readFileSync(configFilename, 'utf8').split('\n')
                     .map(function (elem) {
@@ -35,6 +37,13 @@ function parse(configFilename) {
         let headers = [];
         $(trFirst).find('td').each(function (index, td) {
             let header = normalizeWhitespaces($(td).text());
+            let i = headersUpper.indexOf(header.toUpperCase());
+            if (i != -1) {
+                header = headersGlobal[i];
+            } else {
+                headersGlobal.push(header);
+                headersUpper.push(header.toUpperCase());
+            }
             headers.push(header);
         });
         let content = [];
@@ -66,10 +75,15 @@ function parse(configFilename) {
             depthMax: depthMax,
         };
     });
-    return definitions;
+    return {definitions: definitions,
+            headersGlobal: headersGlobal,
+            headersUpper: headersUpper};
 }
 
-function expand(definitions) {
+function expand(parseResult) {
+    var definitions = parseResult['definitions'];
+    var headersGlobal = parseResult['headersGlobal'];
+    var headersUpper = parseResult['headersUpper'];
     var reReference = /[1-9]\d*(\.[1-9]\d*)+/;
     for (let sectionNumber in definitions) {
         let definition = definitions[sectionNumber];
@@ -80,7 +94,8 @@ function expand(definitions) {
             for (let i = content.length - 1; i >= 0; i--) {
                 let item = content[i];
                 let depth = item['depth'];
-                let reference = item['IE type and reference'];
+                let reference = item[headerName('IE type and reference',
+                                                headersGlobal, headersUpper)];
                 if (!reference) {
                     continue;
                 }
@@ -98,13 +113,15 @@ function expand(definitions) {
                     definition['depthMax'] = Math.max(definition['depthMax'],
                                                 content[i + j + 1]['depth']);
                 }
-                item['IE type and reference'] = null;
+                item[headerName('IE type and reference',
+                                headersGlobal, headersUpper)] = null;
             }
         } while (unexpandedFieldExists);
     }
 }
 
-function toWorkbook(definitions) {
+function toWorkbook(parseResult) {
+    var definitions = parseResult['definitions'];
     var workbook = xlsx.utils.book_new();
     for (let sectionNumber in definitions) {
         let definition = definitions[sectionNumber];
@@ -144,6 +161,10 @@ function toWorkbook(definitions) {
 
 function normalizeWhitespaces(string) {
     return string.trim().replace(/\s+/g, ' ');
+}
+
+function headerName(name, headersGlobal, headersUpper) {
+    return headersGlobal[headersUpper.indexOf(name.toUpperCase())];
 }
 
 if (require.main == module) {
