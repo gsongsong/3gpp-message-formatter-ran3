@@ -107,14 +107,19 @@ function expand(parseResult) {
                 unexpandedFieldExists = true;
                 let contentToInsert = JSON.parse(JSON.stringify(
                     definitions[referenceNumber]['content']));
-                content.splice(i + 1, 0, ...contentToInsert);
-                for (let j = 0; j < contentToInsert.length; j++) {
-                    content[i + j  +1]['depth'] += depth + 1;
-                    definition['depthMax'] = Math.max(definition['depthMax'],
-                                                content[i + j + 1]['depth']);
+                if (contentToInsert.length == 1) {
+                    mergeDefinition(content, i, contentToInsert,
+                                    headersGlobal, headersUpper);
+                } else {
+                    content.splice(i + 1, 0, ...contentToInsert);
+                    for (let j = 0; j < contentToInsert.length; j++) {
+                        content[i + j  +1]['depth'] += depth + 1;
+                        definition['depthMax'] = Math.max(definition['depthMax'],
+                                                    content[i + j + 1]['depth']);
+                    }
+                    item[headerName('IE type and reference',
+                                    headersGlobal, headersUpper)] = null;
                 }
-                item[headerName('IE type and reference',
-                                headersGlobal, headersUpper)] = null;
             }
         } while (unexpandedFieldExists);
     }
@@ -165,6 +170,27 @@ function normalizeWhitespaces(string) {
 
 function headerName(name, headersGlobal, headersUpper) {
     return headersGlobal[headersUpper.indexOf(name.toUpperCase())];
+}
+
+function mergeDefinition(content, i, contentToInsert,
+                            headersGlobal, headersUpper) {
+    var item = content[i];
+    var headerTypeName = headerName('IE/Group Name',
+                                    headersGlobal, headersUpper);
+    var headerPresence = headerName('Presence', headersGlobal, headersUpper);
+    for (let key in item) {
+        if (headerName(key, headersGlobal, headersUpper) == headerTypeName) {
+            continue;
+        }
+        if (headerName(key, headersGlobal, headersUpper) == headerPresence) {
+            continue;
+        }
+        if (key == 'depth') {
+            continue;
+        }
+        item[headerName(key, headersGlobal, headersUpper)] =
+            contentToInsert[0][headerName(key, headersGlobal, headersUpper)];
+    }
 }
 
 if (require.main == module) {
