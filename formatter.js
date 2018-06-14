@@ -32,9 +32,10 @@ function parse(configFilename) {
         let sectionNumberName = config.shift().match(/(\d+(\.\d+)*)\s+(.*)/);
         let sectionNumber = sectionNumberName[1];
         let sectionName = sectionNumberName[3];
-        let header = [];
+        let headers = [];
         $(trFirst).find('td').each(function (index, td) {
-            header.push(normalizeWhitespaces($(td).text()));
+            let header = normalizeWhitespaces($(td).text());
+            headers.push(header);
         });
         let content = [];
         depthMax = 0;
@@ -53,14 +54,14 @@ function parse(configFilename) {
                         text = text.replace(/^>+/, '');
                     }
                 }
-                row[header[index]] = text ? text : null;
+                row[headers[index]] = text ? text : null;
             });
             row.depth = depth;
             content.push(row);
         });
         definitions[sectionNumber] = {
             name: sectionName,
-            header: header,
+            header: headers,
             content: content,
             depthMax: depthMax,
         };
