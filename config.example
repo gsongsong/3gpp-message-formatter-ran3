@@ -24,34 +24,34 @@
 9.2.2.11	UE CONTEXT MODIFICATION CONFIRM
 9.2.3.2	DL RRC MESSAGE TRANSFER
 9.2.3.3	UL RRC MESSAGE TRANSFER
-9.3.1.1	Message Type
-9.3.1.2	Cause
-9.3.1.3	Criticality Diagnostics
-9.3.1.4	gNB-CU UE F1AP ID
-9.3.1.5	gNB-DU UE F1AP ID
-9.3.1.6	RRC-Container
-9.3.1.7	SRB ID
-9.3.1.8	DRB ID
-9.3.1.9	gNB-DU ID
-9.3.1.10	Served Cell Information
-9.3.1.11	Transmission Stop Indicator
-9.3.1.12	NR CGI
-9.3.1.13	Time To wait
-9.3.1.14	PLMN Identity
-9.3.1.15	Transmission Bandwidth
-9.3.1.17	NR ARFCN
-9.3.1.18	gNB-DU System Information
-9.3.1.19	E-UTRAN QoS
-9.3.1.20	Allocation and Retention Priority
-9.3.1.21	GBR QoS Information
-9.3.1.22	Bit Rate
-9.3.1.23	Transaction ID
-9.3.1.24	DRX Cycle
-9.3.1.25	CU to DU RRC Information
-9.3.1.26	DU to CU RRC Information
-9.3.1.27	RLC Mode
-9.3.1.28	SUL Information
-9.3.1.29	Extended-TAC
-9.3.1.30	RRC Reconfiguration Complete Indicator
-9.3.1.31	UL Configuration
-9.3.2.1	GTP Tunnel Endpoint
+9.3.1.1	Message Type *
+9.3.1.2	Cause *
+9.3.1.3	Criticality Diagnostics *
+9.3.1.4	gNB-CU UE F1AP ID *
+9.3.1.5	gNB-DU UE F1AP ID *
+9.3.1.6	RRC-Container *
+9.3.1.7	SRB ID *
+9.3.1.8	DRB ID *
+9.3.1.9	gNB-DU ID *
+9.3.1.10	Served Cell Information *
+9.3.1.11	Transmission Stop Indicator *
+9.3.1.12	NR CGI *
+9.3.1.13	Time To wait *
+9.3.1.14	PLMN Identity *
+9.3.1.15	Transmission Bandwidth *
+9.3.1.17	NR ARFCN *
+9.3.1.18	gNB-DU System Information *
+9.3.1.19	E-UTRAN QoS *
+9.3.1.20	Allocation and Retention Priority *
+9.3.1.21	GBR QoS Information *
+9.3.1.22	Bit Rate *
+9.3.1.23	Transaction ID *
+9.3.1.24	DRX Cycle *
+9.3.1.25	CU to DU RRC Information *
+9.3.1.26	DU to CU RRC Information *
+9.3.1.27	RLC Mode *
+9.3.1.28	SUL Information *
+9.3.1.29	Extended-TAC *
+9.3.1.30	RRC Reconfiguration Complete Indicator *
+9.3.1.31	UL Configuration *
+9.3.2.1	GTP Tunnel Endpoint *

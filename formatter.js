@@ -31,9 +31,16 @@ function parse(configFilename) {
         if (!normalizeWhitespaces(tdTopLeft.text()).match('IE/Group Name')) {
             return true;
         }
-        let sectionNumberName = config.shift().match(/(\d+(\.\d+)*)\s+(.*)/);
-        let sectionNumber = sectionNumberName[1];
-        let sectionName = sectionNumberName[3];
+        let sectionNumberNameExport = config.shift()
+                                        .match(/(\d+(\.\d+)*)\s+(.*)/);
+        let sectionNumber = sectionNumberNameExport[1];
+        let sectionName = sectionNumberNameExport[3];
+        let doNotExport = false;
+        if (sectionName.endsWith('*')) {
+            doNotExport = true;
+            sectionName = sectionName.substring(0, sectionName.length - 1)
+                                    .trim();
+        }
         let headers = [];
         $(trFirst).find('td').each(function (index, td) {
             let header = normalizeWhitespaces($(td).text());
@@ -73,6 +80,7 @@ function parse(configFilename) {
             header: headers,
             content: content,
             depthMax: depthMax,
+            doNotExport: doNotExport,
         };
     });
     return {definitions: definitions,
@@ -142,6 +150,9 @@ function toWorkbook(parseResult) {
     var workbook = xlsx.utils.book_new();
     for (let sectionNumber in definitions) {
         let definition = definitions[sectionNumber];
+        if (definition['doNotExport']) {
+            continue;
+        }
         let name = definition['name'];
         let depthMax = definition['depthMax'];
         let worksheet_data = [];
@@ -170,8 +181,8 @@ function toWorkbook(parseResult) {
             worksheet_data.push(row);
         }
         let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
-        xlsx.utils.book_append_sheet(workbook, worksheet,
-            `${(`${sectionNumber} ${name}`).substring(0, 30)}`);
+        let sheetname = `${(`${sectionNumber} ${name}`).substring(0, 30)}`;
+        xlsx.utils.book_append_sheet(workbook, worksheet, sheetname);
     }
     return workbook;
 }
