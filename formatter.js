@@ -95,6 +95,8 @@ function parse(configFilename) {
                 depthMax: depthMax,
                 doNotExport: doNotExport,
             };
+            // console.log(sectionNumber, 
+            //             JSON.stringify(definitions[sectionNumber], null, 2));
         } else if (tdTopLeft.match(/Range bound/i)) {
             if (!('Range bound' in definitions)) {
                 definitions['Range bound'] = {};
