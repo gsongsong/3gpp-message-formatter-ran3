@@ -11,6 +11,9 @@ function format(configFilename) {
     return toWorkbook(parseResult);
 }
 
+var reReferenceNumber = /\b[1-9]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*)\b/;
+var reReferenceNumberName = /\b([1-9]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)/;
+
 function parse(configFilename) {
     var definitions = {};
     var headersGlobal = [];
@@ -30,8 +33,6 @@ function parse(configFilename) {
                                                     .text());
         // NOTE: In cheerio DOM, newline is not converted into whitespace
         if (tdTopLeft.match(/IE\/Group Name/i)) {
-            let sectionNumberNameExport = config.shift()
-                                            .match(/(\d+(\.\d+)*)\s+(.*)/);
             if (!config.length) {
                 throw tocTableMismatch;
             }
@@ -42,8 +43,9 @@ function parse(configFilename) {
             if (line == 'end') {
                 return false;
             }
+            let sectionNumberNameExport = line.match(reReferenceNumberName);
             let sectionNumber = sectionNumberNameExport[1];
-            let sectionName = sectionNumberNameExport[3];
+            let sectionName = sectionNumberNameExport[4];
             let doNotExport = false;
             if (sectionName.endsWith('*')) {
                 doNotExport = true;
@@ -146,7 +148,6 @@ function expand(parseResult) {
     var definitions = parseResult['definitions'];
     var headersGlobal = parseResult['headersGlobal'];
     var headersUpper = parseResult['headersUpper'];
-    var reReference = /[1-9]\d*(\.[1-9]\d*)+/;
     for (let key in definitions) {
         if (key == 'Range bound' || key == 'Causes') {
             continue;
@@ -165,7 +166,7 @@ function expand(parseResult) {
                 if (!reference) {
                     continue;
                 }
-                let referenceMatch = reference.match(reReference);
+                let referenceMatch = reference.match(reReferenceNumber);
                 if (!referenceMatch) {
                     continue;
                 }
