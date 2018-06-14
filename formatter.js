@@ -209,6 +209,8 @@ function mergeDefinition(content, i, contentToInsert,
     var headerTypeName = headerName('IE/Group Name',
                                     headersGlobal, headersUpper);
     var headerPresence = headerName('Presence', headersGlobal, headersUpper);
+    var headerTypeRef = headerName('IE type and reference',
+                                    headersGlobal, headersUpper);
     for (let key in item) {
         if (headerName(key, headersGlobal, headersUpper) == headerTypeName) {
             continue;
@@ -219,8 +221,12 @@ function mergeDefinition(content, i, contentToInsert,
         if (key == 'depth') {
             continue;
         }
-        item[headerName(key, headersGlobal, headersUpper)] =
-            contentToInsert[0][headerName(key, headersGlobal, headersUpper)];
+        if (headerName(key, headersGlobal, headersUpper) == headerTypeRef ||
+            (!item[headerName(key, headersGlobal, headersUpper)])) {
+                item[headerName(key, headersGlobal, headersUpper)] =
+                    contentToInsert[0][headerName(key,
+                                                headersGlobal, headersUpper)];
+            }
     }
 }
 
