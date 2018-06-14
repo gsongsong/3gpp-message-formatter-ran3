@@ -111,11 +111,23 @@ function expand(parseResult) {
                     mergeDefinition(content, i, contentToInsert,
                                     headersGlobal, headersUpper);
                 } else {
+                    let expandAsIs = true;
+                    if (hasOneRoot(contentToInsert) &&
+                        item[headerName('IE/Group Name',
+                                                headersGlobal, headersUpper)] ==
+                        contentToInsert[0][headerName('IE/Group Name',
+                                                headersGlobal, headersUpper)]) {
+                        expandAsIs = false;
+                        mergeDefinition(content, i, [contentToInsert[0]],
+                                        headersGlobal, headersUpper);
+                        contentToInsert.splice(0, 1);
+                    }
                     content.splice(i + 1, 0, ...contentToInsert);
                     for (let j = 0; j < contentToInsert.length; j++) {
-                        content[i + j  +1]['depth'] += depth + 1;
-                        definition['depthMax'] = Math.max(definition['depthMax'],
-                                                    content[i + j + 1]['depth']);
+                        content[i + j  +1]['depth'] += depth + expandAsIs;
+                        definition['depthMax'] =
+                            Math.max(definition['depthMax'],
+                                        content[i + j + 1]['depth']);
                     }
                     item[headerName('IE type and reference',
                                     headersGlobal, headersUpper)] = null;
@@ -170,6 +182,12 @@ function normalizeWhitespaces(string) {
 
 function headerName(name, headersGlobal, headersUpper) {
     return headersGlobal[headersUpper.indexOf(name.toUpperCase())];
+}
+
+function hasOneRoot(content) {
+    return content.filter(function (item) {
+                            return item['depth'] == 0;
+                        }).length == 1;
 }
 
 function mergeDefinition(content, i, contentToInsert,
