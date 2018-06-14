@@ -32,6 +32,16 @@ function parse(configFilename) {
         if (tdTopLeft.match(/IE\/Group Name/i)) {
             let sectionNumberNameExport = config.shift()
                                             .match(/(\d+(\.\d+)*)\s+(.*)/);
+            if (!config.length) {
+                throw tocTableMismatch;
+            }
+            let line = config.shift();
+            if (!line) {
+                throw tocTableMismatch;
+            }
+            if (line == 'end') {
+                return false;
+            }
             let sectionNumber = sectionNumberNameExport[1];
             let sectionName = sectionNumberNameExport[3];
             let doNotExport = false;
@@ -124,10 +134,8 @@ function parse(configFilename) {
             });
         }
     });
-    if (config.filter(function (item) { return !!item; }).length) {
-        throw config.length + `Number of messages/IEs in config file and number of tables in specification document mismatch!
-    1. Check whether there are missing or unintended items in config file
-    2. Check whether there are missing (uncompleted) tables in specification document file`
+    if (config.filter(function (item) { return !!item && item != 'end'; }).length) {
+        throw tocTableMismatch;
     }
     return {definitions: definitions,
             headersGlobal: headersGlobal,
@@ -307,6 +315,10 @@ function mergeDefinition(content, i, contentToInsert,
             }
     }
 }
+
+var tocTableMismatch = `Number of messages/IEs in config file and number of tables in specification document mismatch!
+    1. Check whether there are missing or unintended items in config file
+    2. Check whether there are missing (uncompleted) tables in specification document file`;
 
 if (require.main == module) {
     if (process.argv.length >= 4) {
