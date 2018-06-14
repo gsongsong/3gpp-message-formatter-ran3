@@ -124,6 +124,11 @@ function parse(configFilename) {
             });
         }
     });
+    if (config.filter(function (item) { return !!item; }).length) {
+        throw config.length + `Number of messages/IEs in config file and number of tables in specification document mismatch!
+    1. Check whether there are missing or unintended items in config file
+    2. Check whether there are missing (uncompleted) tables in specification document file`
+    }
     return {definitions: definitions,
             headersGlobal: headersGlobal,
             headersUpper: headersUpper};
@@ -157,6 +162,9 @@ function expand(parseResult) {
                     continue;
                 }
                 let referenceNumber = referenceMatch[0];
+                if (!(referenceNumber in definitions)) {
+                    continue;
+                }
                 unexpandedFieldExists = true;
                 let contentToInsert = JSON.parse(JSON.stringify(
                     definitions[referenceNumber]['content']));
