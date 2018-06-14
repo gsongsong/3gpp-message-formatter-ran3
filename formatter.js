@@ -61,7 +61,9 @@ function parse(configFilename) {
             }
             let row = {};
             $(tr).children('td').each(function (index, td) {
-                let text = normalizeWhitespaces($(td).text());
+                let text = $(td).html();
+                text = text.replace(/<sup>(.*?)<\/sup>/g, '^($1)');
+                text = normalizeWhitespaces($(text).text());
                 if (index == 0) {
                     let matchBracket = $(td).text().match(/>/g);
                     depth = matchBracket ? matchBracket.length : 0;
