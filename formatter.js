@@ -101,7 +101,27 @@ function parse(configFilename) {
                 rangeBounds[name] = explanation;
             });
         } else if (tdTopLeft.match(/cause/i)) {
-
+            if (!('Causes' in definitions)) {
+                definitions['Causes'] = {};
+            }
+            let causesAll = definitions['Causes'];
+            let causeType = normalizeWhitespaces(tdTopLeft);
+            if (!(causeType in causesAll)) {
+                causesAll[causeType] = {};
+            }
+            causes = causesAll[causeType];
+            trs.each(function (index, tr) {
+                if (index == 0) {
+                    return true;
+                }
+                let tds = $(tr).children('td');
+                let name = normalizeWhitespaces($(tds[0]).text());
+                let meaning = normalizeWhitespaces($(tds[1]).text());
+                if (name in causes) {
+                    return true;
+                }
+                causes[name] = meaning;
+            });
         }
     });
     return {definitions: definitions,
@@ -115,7 +135,7 @@ function expand(parseResult) {
     var headersUpper = parseResult['headersUpper'];
     var reReference = /[1-9]\d*(\.[1-9]\d*)+/;
     for (let key in definitions) {
-        if (key == 'Range bound') {
+        if (key == 'Range bound' || key == 'Causes') {
             continue;
         }
         let sectionNumber = key;
@@ -183,6 +203,19 @@ function toWorkbook(parseResult) {
             }
             let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
             xlsx.utils.book_append_sheet(workbook, worksheet, 'Range bound');
+        } else if (key == 'Causes') {
+            let causesAll = definitions[key];
+            let worksheet_data = [];
+            for (let causeType in causesAll) {
+                worksheet_data.push([causeType, 'Meaning']);
+                let causes = causesAll[causeType];
+                for (let name in causes) {
+                    worksheet_data.push([name, causes[name]]);
+                }
+                worksheet_data.push([null]);
+            }
+            let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
+            xlsx.utils.book_append_sheet(workbook, worksheet, 'Causes');
         } else {
             let sectionNumber = key;
             let definition = definitions[sectionNumber];
