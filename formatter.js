@@ -29,7 +29,7 @@ function parse(configFilename) {
         if (!normalizeWhitespaces(tdTopLeft.text()).match('IE/Group Name')) {
             return true;
         }
-        let sectionNumberName = config.shift().match(/(\d+(\.\d+)*)\s(.*)/);
+        let sectionNumberName = config.shift().match(/(\d+(\.\d+)*)\s+(.*)/);
         let sectionNumber = sectionNumberName[1];
         let sectionName = sectionNumberName[3];
         let header = [];
@@ -142,7 +142,7 @@ function toWorkbook(definitions) {
 }
 
 function normalizeWhitespaces(string) {
-    return string.trim().replace(/\n/g, '').replace(/\s{2,}/g, ' ');
+    return string.trim().replace(/\s+/g, ' ');
 }
 
 if (require.main == module) {
