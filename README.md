@@ -1,4 +1,4 @@
-# 3GPP Message Formatter
+# 3GPP Message Formatter for RAN3
 
 It formats application protocol messages into tables
 
@@ -80,10 +80,10 @@ Be careful to use `end`:
 
 ## Limitations
 
-Current supported specification documents: RAN3 Application Protocol (36.4xx, 38.4xx AP series)
+Current supported specification documents: RAN3 Application Protocol (36.4x3, 38.4x3 AP series)
 
 Currently, you need to handle manually some message/IE types which refer other specification documents
 
 ## Contact
 
-Bug/Issue reporting: https://github.com/gsongsong/3gpp-message-formatter/issues
+Bug/Issue reporting: https://github.com/gsongsong/3gpp-message-formatter-ran3/issues
