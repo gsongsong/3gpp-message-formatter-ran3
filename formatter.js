@@ -11,8 +11,8 @@ function format(configFilename) {
     return toWorkbook(parseResult);
 }
 
-var reReferenceNumber = /\b[1-9]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*)\b/;
-var reReferenceNumberName = /\b([1-9]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)/;
+var reReferenceNumber = /\b[1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*)\b/;
+var reReferenceNumberName = /\b([1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)/;
 
 function parse(configFilename) {
     var configFileDir = path.parse(configFilename)['dir'];
@@ -272,7 +272,8 @@ function toWorkbook(parseResult) {
                 worksheet_data.push(row);
             }
             let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
-            let sheetname = `${(`${sectionNumber} ${name}`).substring(0, 30)}`;
+            let sheetname = `${sectionNumber} ${name}`.substring(0, 30)
+                                .replace(/[\\\/?*\[\]]/g, '_');
             xlsx.utils.book_append_sheet(workbook, worksheet, sheetname);
         }
     }
