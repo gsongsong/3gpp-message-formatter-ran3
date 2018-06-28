@@ -15,6 +15,7 @@ var reReferenceNumber = /\b[1-9]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*)\b/;
 var reReferenceNumberName = /\b([1-9]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)/;
 
 function parse(configFilename) {
+    var configFileDir = path.parse(configFilename)['dir'];
     var definitions = {};
     var headersGlobal = [];
     var headersUpper = [];
@@ -23,7 +24,7 @@ function parse(configFilename) {
                     .map(function (elem) {
                         return elem.trim();
                     });
-    var htmlFilename = config.shift();
+    var htmlFilename = path.resolve(__dirname,configFileDir, config.shift());
     var $ = cheerio.load(fs.readFileSync(htmlFilename, 'utf8'));
     var tbodies = $('table');
     tbodies.each(function (index, tbody) {
