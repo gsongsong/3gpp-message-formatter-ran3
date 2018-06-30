@@ -1,171 +1,173 @@
 var fs = require('fs');
 var path = require('path');
-var cheerio = require('cheerio');
+var $ = require('cheerio');
 var xlsx = require('xlsx');
 
 module.exports = exports = format;
 
-function format(configFilename) {
-    var parseResult = parse(configFilename);
-    expand(parseResult);
-    return toWorkbook(parseResult);
+function format(html) {
+    var definitions = parse(html);
+    expand(definitions);
+    return toWorkbook(definitions);
 }
 
+var reTagHeader = /h[1-6]/g;
+var reTagTable = /table/g
 var reReferenceNumber = /\b[1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*)\b/;
 var reReferenceNumberName = /\b([1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)/;
+var reIEGroupName = /IE.*Group.*Name/gi;
+var reRangeBound = /Range.*bound/gi;
+var reCondition = /Condition/gi;
+var reCause = /Cause/gi;
 
-function parse(configFilename) {
-    var configFileDir = path.parse(configFilename)['dir'];
-    var definitions = {};
-    var headersGlobal = [];
-    var headersUpper = [];
-    // TODO: handle newline more elegantly
-    var config = fs.readFileSync(configFilename, 'utf8').split('\n')
-                    .map(function (elem) {
-                        return elem.trim();
-                    });
-    var htmlFilename = path.resolve(__dirname,configFileDir, config.shift());
-    var $ = cheerio.load(fs.readFileSync(htmlFilename, 'utf8'));
-    var tbodies = $('table');
-    tbodies.each(function (index, tbody) {
-        let trs = $(tbody).find('tr');
-        let trFirst = trs.first();
-        let tdTopLeft = normalizeWhitespaces(trFirst.find('td').first()
-                                                    .text());
-        // NOTE: In cheerio DOM, newline is not converted into whitespace
-        if (tdTopLeft.match(/IE\/Group Name/i)) {
-            if (!config.length) {
-                throw tocTableMismatch;
+var reForSeparateSheets = [reCause];
+
+function parse(html) {
+    let definitions = {};
+    let lastHeader = null;
+    let deque = [$(html)];
+    while (deque.length) {
+        let root = deque.pop();
+        let idxToInsert = deque.length;
+        if (root['type'] == 'tag') {
+            if (root['name'].match(reTagHeader)) {
+                lastHeader = normalizeWhitespaces($(root).text());
+                continue;
             }
-            let line = config.shift();
-            if (!line) {
-                throw tocTableMismatch;
-            }
-            if (line == 'end') {
-                return false;
-            }
-            let sectionNumberNameExport = line.match(reReferenceNumberName);
-            let sectionNumber = sectionNumberNameExport[1];
-            let sectionName = sectionNumberNameExport[4];
-            let doNotExport = false;
-            if (sectionName.endsWith('*')) {
-                doNotExport = true;
-                sectionName = sectionName.substring(0, sectionName.length - 1)
-                                        .trim();
-            }
-            let headers = [];
-            $(trFirst).find('td').each(function (index, td) {
-                let header = normalizeWhitespaces($(td).text());
-                let i = headersUpper.indexOf(header.toUpperCase());
-                if (i != -1) {
-                    header = headersGlobal[i];
-                } else {
-                    headersGlobal.push(header);
-                    headersUpper.push(header.toUpperCase());
-                }
-                headers.push(header);
-            });
-            let content = [];
-            depthMax = 0;
-            trs.each(function (index, tr) {
-                if (index == 0) {
-                    return true;
-                }
-                let row = {};
-                $(tr).children('td').each(function (index, td) {
-                    let text = $(td).html();
-                    text = text.replace(/<sup>(.*?)<\/sup>/g, '^($1)');
-                    text = normalizeWhitespaces($(text).text());
-                    if (index == 0) {
-                        let matchBracket = $(td).text().match(/>/g);
-                        depth = matchBracket ? matchBracket.length : 0;
-                        depthMax = Math.max(depthMax, depth);
-                        if (depth) {
-                            text = text.replace(/^>+/, '');
+            if (root['name'].match(reTagTable)) {
+                let rows = [];
+                $(root).children().each(function(idxChild, tableChild) {
+                    if (tableChild['type'] == 'tag') {
+                        switch (tableChild['name']) {
+                            case 'thead':
+                            case 'tbody':
+                            case 'tfoot':
+                                $(tableChild).children('tr').each(
+                                    function(idxRow, tr) {
+                                        rows.push(tr);
+                                    });
+                                break;
+                            case 'tr':
+                                rows.push(tableChild);
+                                break;
                         }
                     }
-                    row[headers[index]] = text ? text : null;
                 });
-                row.depth = depth;
-                content.push(row);
-            });
-            definitions[sectionNumber] = {
-                name: sectionName,
-                header: headers,
-                content: content,
-                depthMax: depthMax,
-                doNotExport: doNotExport,
-            };
-            // console.log(sectionNumber, 
-            //             JSON.stringify(definitions[sectionNumber], null, 2));
-        } else if (tdTopLeft.match(/Range bound/i)) {
-            if (!('Range bound' in definitions)) {
-                definitions['Range bound'] = {};
+                tableToJson(definitions, rows, lastHeader);
+                continue;
             }
-            let rangeBounds = definitions['Range bound'];
-            trs.each(function (index, tr) {
-                if (index == 0) {
-                    return true;
-                }
-                let tds = $(tr).children('td');
-                let name = normalizeWhitespaces($(tds[0]).text());
-                let explanation = normalizeWhitespaces($(tds[1]).text());
-                if (name in rangeBounds) {
-                    return true;
-                }
-                rangeBounds[name] = explanation;
-            });
-        } else if (tdTopLeft.match(/cause/i)) {
-            if (!('Causes' in definitions)) {
-                definitions['Causes'] = {};
-            }
-            let causesAll = definitions['Causes'];
-            let causeType = normalizeWhitespaces(tdTopLeft);
-            if (!(causeType in causesAll)) {
-                causesAll[causeType] = {};
-            }
-            causes = causesAll[causeType];
-            trs.each(function (index, tr) {
-                if (index == 0) {
-                    return true;
-                }
-                let tds = $(tr).children('td');
-                let name = normalizeWhitespaces($(tds[0]).text());
-                let meaning = normalizeWhitespaces($(tds[1]).text());
-                if (name in causes) {
-                    return true;
-                }
-                causes[name] = meaning;
-            });
         }
-    });
-    if (config.filter(function (item) { return !!item && item != 'end'; }).length) {
-        throw tocTableMismatch;
+        $(root).children().each(function(idxRoot, child) {
+            deque.splice(idxToInsert, 0, child);
+        });
     }
-    return {definitions: definitions,
-            headersGlobal: headersGlobal,
-            headersUpper: headersUpper};
+    return definitions;
 }
 
-function expand(parseResult) {
-    var definitions = parseResult['definitions'];
-    var headersGlobal = parseResult['headersGlobal'];
-    var headersUpper = parseResult['headersUpper'];
-    for (let key in definitions) {
-        if (key == 'Range bound' || key == 'Causes') {
-            continue;
+function tableToJson(definitions, rows, header) {
+    if (!header) {
+        return;
+    }
+    let matchResult = header.match(reReferenceNumberName);
+    if (!matchResult) {
+        return;
+    }
+    let sectionNumber = matchResult[1];
+    let sectionName = matchResult[4];
+    let content = [];
+    let depthMax = 0;
+    let tableType = 'definition';
+    $(rows).each(function(idxRow, row) {
+        let rowContent = {content: [], depth: 0};
+        $(row).children('td').each(function(idxCell, td) {
+            let tdText = $(td).html();
+            tdText = tdText.replace(/<sup>(.*?)<\/sup>/g, '^($1)');
+            tdText = normalizeWhitespaces($(tdText).text());
+            if (idxRow == 0 && idxCell == 0) {
+                if (tdText.match(reIEGroupName)) {
+                } else {
+                    for (let re of reForSeparateSheets) {
+                        if (tdText.match(re)) {
+                            tableType = 'separate';
+                            sectionName = re.toString();
+                            break;
+                        }
+                    }
+                    if (tableType == 'separate') {
+                    } else if(tdText.match(reRangeBound) ||
+                                tdText.match(reCondition)) {
+                        tableType = 'auxiliary'
+                    } else {
+                        tableType = 'invalid';
+                        return false;
+                    }
+                }
+            }
+            if (idxCell == 0) {
+                let matchBracket = tdText.match(/^>+/);
+                if (matchBracket) {
+                    rowContent['depth'] = matchBracket[0].length;
+                    depthMax = Math.max(depthMax, rowContent['depth']);
+                    tdText = tdText.replace(/^>+/, '');
+                }
+            }
+            rowContent['content'].push(tdText);
+        });
+        content.push(rowContent);
+        if (tableType == 'invalid') {
+            return false;
         }
+    });
+    if (tableType == 'definition') {
+        definitions[sectionNumber] = {
+            name: sectionName,
+            content: content,
+            depthMax: depthMax,
+        }
+    } else if (tableType == 'separate') {
+        if (!(sectionName in definitions)) {
+            definitions[sectionName] = {
+                content: content,
+                separate: true,
+            }
+            definitions[sectionName]['content'].push(null);
+        } else {
+            for (let elem of content) {
+                definitions[sectionName]['content'].push(elem);
+            }
+            definitions[sectionName]['content'].push(null);
+        }
+    } else if (tableType == 'auxiliary') {
+        if (sectionNumber in definitions) {
+            let definition = definitions[sectionNumber];
+            if (!('auxiliary' in definition)) {
+                definition['auxiliary'] = [content];
+            } else {
+                definition['auxiliary'].push(content);
+            }
+        } else {
+            throw 'Definition does not exist';
+        }
+    } else {
+        return;
+    }
+}
+
+function expand(definitions) {
+    for (let key in definitions) {
         let sectionNumber = key;
         let definition = definitions[sectionNumber];
+        if (definition['separate']) {
+            continue;
+        }
         let content = definition['content'];
         let unexpandedFieldExists;
         do {
             unexpandedFieldExists = false;
             for (let i = content.length - 1; i >= 0; i--) {
-                let item = content[i];
-                let depth = item['depth'];
-                let reference = item[headerName('IE type and reference',
-                                                headersGlobal, headersUpper)];
+                let item = content[i]['content'];
+                let depth = content[i]['depth'];
+                let reference = item[3];
                 if (!reference) {
                     continue;
                 }
@@ -178,104 +180,87 @@ function expand(parseResult) {
                     continue;
                 }
                 unexpandedFieldExists = true;
+                // Deep copy excluding header
+                let dereferenced = definitions[referenceNumber];
                 let contentToInsert = JSON.parse(JSON.stringify(
-                    definitions[referenceNumber]['content']));
+                                            dereferenced['content'].slice(1)));
                 if (contentToInsert.length == 1) {
-                    mergeDefinition(content, i, contentToInsert,
-                                    headersGlobal, headersUpper);
+                    mergeDefinition(content, i, contentToInsert[0]);
                 } else {
                     let expandAsIs = true;
                     if (hasOneRoot(contentToInsert) &&
-                        item[headerName('IE/Group Name',
-                                                headersGlobal, headersUpper)] ==
-                        contentToInsert[0][headerName('IE/Group Name',
-                                                headersGlobal, headersUpper)]) {
+                            item[0] == contentToInsert[0][0]) {
                         expandAsIs = false;
-                        mergeDefinition(content, i, [contentToInsert[0]],
-                                        headersGlobal, headersUpper);
+                        mergeDefinition(content, i, contentToInsert[0]);
                         contentToInsert.splice(0, 1);
                     }
-                    content.splice(i + 1, 0, ...contentToInsert);
                     for (let j = 0; j < contentToInsert.length; j++) {
-                        content[i + j  +1]['depth'] += depth + expandAsIs;
+                        content.splice(i + j + 1, 0, contentToInsert[j]);
+                        let numFill = content[i]['content'].length - 
+                                        content[i + j + 1]['content'].length;
+                        for (let k = 0; k < numFill; k++) {
+                            content[i + j + 1]['content'].push(null);
+                        }
+                        content[i + j + 1]['depth'] += depth + expandAsIs;
                         definition['depthMax'] =
                             Math.max(definition['depthMax'],
                                         content[i + j + 1]['depth']);
                     }
-                    item[headerName('IE type and reference',
-                                    headersGlobal, headersUpper)] = null;
+                    item[3] = null;
                 }
+                mergeAuxiliary(definition, dereferenced);
             }
         } while (unexpandedFieldExists);
     }
 }
 
-function toWorkbook(parseResult) {
-    var definitions = parseResult['definitions'];
+function toWorkbook(definitions) {
     var workbook = xlsx.utils.book_new();
     for (let key in definitions) {
-        if (key == 'Range bound') {
-            let rangeBounds = definitions[key];
-            let worksheet_data =[];
-            worksheet_data.push(['Range bound', 'Explanation']);
-            for (let name in rangeBounds) {
-                worksheet_data.push([name, rangeBounds[name]]);
-            }
-            let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
-            xlsx.utils.book_append_sheet(workbook, worksheet, 'Range bound');
-        } else if (key == 'Causes') {
-            let causesAll = definitions[key];
-            let worksheet_data = [];
-            for (let causeType in causesAll) {
-                worksheet_data.push([causeType, 'Meaning']);
-                let causes = causesAll[causeType];
-                for (let name in causes) {
-                    worksheet_data.push([name, causes[name]]);
-                }
+        let sectionNumber = key;
+        let definition = definitions[sectionNumber];
+        let name = definition['name'];
+        let depthMax = definition['depthMax'] || 0;
+        let worksheet_data = [];
+        worksheet_data.push([name]);
+        worksheet_data.push([null]);
+        for (let content of definition['content']) {
+            if (!content) {
                 worksheet_data.push([null]);
-            }
-            let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
-            xlsx.utils.book_append_sheet(workbook, worksheet, 'Causes');
-        } else {
-            let sectionNumber = key;
-            let definition = definitions[sectionNumber];
-            if (definition['doNotExport']) {
                 continue;
             }
-            let name = definition['name'];
-            let depthMax = definition['depthMax'];
-            let worksheet_data = [];
-            worksheet_data.push([name]);
-            worksheet_data.push([null]);
-            let header = [];
-            for (let item of definition['header']) {
-                header.push(item);
+            let depth = content['depth'];
+            let row = [];
+            for (let elem of content['content']) {
+                row.push(elem);
             }
-            for (let i = 0; i < depthMax; i++) {
-                header.splice(1, 0, null);
+            for (let i = 0; i < depth; i++) {
+                row.splice(0, 0, null);
             }
-            worksheet_data.push(header);
-            for (let item of definition['content']) {
-                let row = [];
-                for (let key in item) {
-                    if (key == 'depth') {
-                        continue;
-                    }
-                    row.push(item[key]);
-                }
-                for (let i = 0; i < depthMax - item['depth']; i++) {
-                    row.splice(1, 0, null);
-                }
-                for (let i = 0; i < item['depth']; i++) {
-                    row.splice(0, 0, null);
-                }
-                worksheet_data.push(row);
+            for (let i = 0; i < depthMax - depth; i++) {
+                row.splice(depth + 1, 0, null);
             }
-            let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
-            let sheetname = `${sectionNumber} ${name}`.substring(0, 30)
-                                .replace(/[\\\/?*\[\]]/g, '_');
-            xlsx.utils.book_append_sheet(workbook, worksheet, sheetname);
+            worksheet_data.push(row);
         }
+        if ('auxiliary' in definition) {
+            for (let auxiliary of definition['auxiliary']) {
+                worksheet_data.push([null]);
+                for (let content of auxiliary) {
+                    let row = [];
+                    for (let elem of content['content']) {
+                        row.push(elem);
+                    }
+                    for (let i = 0; i < depthMax; i++) {
+                        row.splice(1, 0, null);
+                    }
+                    worksheet_data.push(row);
+                }
+            }
+        }
+        let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
+        let sheetname = `${sectionNumber} ${name || ''}`.substring(0, 30)
+                            .replace(/[\\\/?*\[\]]/g, '_');
+        xlsx.utils.book_append_sheet(workbook, worksheet, sheetname);
     }
     return workbook;
 }
@@ -284,52 +269,87 @@ function normalizeWhitespaces(string) {
     return string.trim().replace(/\s+/g, ' ');
 }
 
-function headerName(name, headersGlobal, headersUpper) {
-    return headersGlobal[headersUpper.indexOf(name.toUpperCase())];
-}
-
 function hasOneRoot(content) {
     return content.filter(function (item) {
                             return item['depth'] == 0;
                         }).length == 1;
 }
 
-function mergeDefinition(content, i, contentToInsert,
-                            headersGlobal, headersUpper) {
-    var item = content[i];
-    var headerTypeName = headerName('IE/Group Name',
-                                    headersGlobal, headersUpper);
-    var headerPresence = headerName('Presence', headersGlobal, headersUpper);
-    var headerTypeRef = headerName('IE type and reference',
-                                    headersGlobal, headersUpper);
-    for (let key in item) {
-        if (headerName(key, headersGlobal, headersUpper) == headerTypeName) {
+function mergeDefinition(content, i, contentToInsert) {
+    var item = content[i]['content'];
+    for (let i = 0 ; i < item.length; i++) {
+        // Do not overwrite IE/Group Name and Presence
+        if (i == 0 || i == 1) {
             continue;
         }
-        if (headerName(key, headersGlobal, headersUpper) == headerPresence) {
-            continue;
+        if (i == contentToInsert['content'].length) {
+            break;
         }
-        if (key == 'depth') {
-            continue;
-        }
-        if (headerName(key, headersGlobal, headersUpper) == headerTypeRef ||
-            (!item[headerName(key, headersGlobal, headersUpper)])) {
-                item[headerName(key, headersGlobal, headersUpper)] =
-                    contentToInsert[0][headerName(key,
-                                                headersGlobal, headersUpper)];
-            }
+        item[i] = contentToInsert['content'][i];
     }
 }
 
-var tocTableMismatch = `Number of messages/IEs in config file and number of tables in specification document mismatch!
-    1. Check whether there are missing or unintended items in config file
-    2. Check whether there are missing (uncompleted) tables in specification document file`;
+function mergeAuxiliary(definition, dereferenced) {
+    if (!('auxiliary' in dereferenced)) {
+        return;
+    }
+    let auxDereferenced = dereferenced['auxiliary'];
+    if (!('auxiliary' in definition)) {
+        definition['auxiliary'] = JSON.parse(JSON.stringify(
+                                        dereferenced['auxiliary']));
+        return;
+    }
+    let auxsInDefinitions = definition['auxiliary'];
+    for (let auxiliary of auxDereferenced) {
+        let skipAux = false;
+        for (let re of reForSeparateSheets) {
+            if (auxiliary[0]['content'][0].match(re)) {
+                skipAux = true;
+                break;
+            }
+        }
+        if (skipAux) {
+            continue;
+        }
+        let idxAux = null;
+        for (let i = 0; i < auxsInDefinitions.length; i++) {
+            if (auxiliary[0]['content'][0] ==
+                    auxsInDefinitions[i][0]['content'][0]) {
+                idxAux = i;
+                break;
+            }
+        }
+        if (idxAux == null) {
+            auxsInDefinitions.push(JSON.parse(JSON.stringify(auxiliary)));
+        } else {
+            let auxContent = auxsInDefinitions[idxAux];
+            for (let i = 1; i < auxiliary.length; i++) {
+                let idxRow = null;
+                for (let j = 1; j < auxContent.length; j++) {
+                    if (auxiliary[i]['content'][0] ==
+                            auxContent[j]['content'][0]) {
+                        idxRow = j;
+                        break;
+                    }
+                }
+                if (idxRow != null) {
+                    continue;
+                }
+                auxContent.push(JSON.parse(JSON.stringify(auxiliary[i])));
+            }
+        }
+    }
+}
 
 if (require.main == module) {
-    if (process.argv.length >= 4) {
-        xlsx.writeFile(format(process.argv[2]), process.argv[3]);
+    if (process.argv.length >= 3) {
+        let filename = path.parse(process.argv[2]);
+        let html = fs.readFileSync(path.resolve(__dirname, filename['dir'],
+                                                filename['base']),
+                                    'utf8');
+        xlsx.writeFile(format(html), `${filename['name']}.xlsx`);
     } else {
-        console.log('Usage: node formatter <config_file_name> <outfile_name>');
-        console.log('  ex : node formatter config.example 38473-f11.xlsx');
+        console.log('Usage: node formatter <file_name>');
+        console.log('  ex : node formatter 38473-f11.htm');
     }
 }
