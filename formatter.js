@@ -80,7 +80,7 @@ function tableToJson(definitions, rows, header) {
     $(rows).each(function(idxRow, row) {
         let rowContent = {content: [], depth: 0};
         $(row).children('td').each(function(idxCell, td) {
-            let tdText = $(td).html();
+            let tdText = normalizeWhitespaces($(td).html());
             tdText = tdText.replace(/<sup>(.*?)<\/sup>/g, '^($1)');
             tdText = normalizeWhitespaces($(tdText).text());
             if (idxRow == 0 && idxCell == 0) {
