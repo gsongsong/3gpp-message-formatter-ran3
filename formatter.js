@@ -344,7 +344,7 @@ function mergeAuxiliary(definition, dereferenced) {
 if (require.main == module) {
     if (process.argv.length >= 3) {
         let filename = path.parse(process.argv[2]);
-        let html = fs.readFileSync(path.resolve(__dirname, filename['dir'],
+        let html = fs.readFileSync(path.resolve(process.cwd(), filename['dir'],
                                                 filename['base']),
                                     'utf8');
         xlsx.writeFile(format(html), `${filename['name']}.xlsx`);
