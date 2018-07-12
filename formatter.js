@@ -282,10 +282,18 @@ function mergeDefinition(content, i, contentToInsert) {
         if (i == 0 || i == 1) {
             continue;
         }
-        if (i == contentToInsert['content'].length) {
+        if (i >= contentToInsert['content'].length) {
             break;
         }
-        item[i] = contentToInsert['content'][i];
+        let subContent = contentToInsert['content'][i];
+        if (!subContent) {
+            continue;
+        }
+        if (i == 4) {
+            item[i] += '\n\n' + subContent;
+        } else {
+            item[i] = subContent;
+        }
     }
 }
 
