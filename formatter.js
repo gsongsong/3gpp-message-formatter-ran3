@@ -12,6 +12,7 @@ function format(html) {
 }
 
 var reTagHeader = /h[1-6]/g;
+var reTagHeaderAlternative = /^\b([1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)\s+$/;
 var reTagTable = /table/g
 var reReferenceNumber = /\b[1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*)\b/;
 var reReferenceNumberName = /\b([1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)/;
@@ -31,6 +32,10 @@ function parse(html) {
         let idxToInsert = deque.length;
         if (root['type'] == 'tag') {
             if (root['name'].match(reTagHeader)) {
+                lastHeader = normalizeWhitespaces($(root).text());
+                continue;
+            }
+            if ($(root).text().match(reTagHeaderAlternative)) {
                 lastHeader = normalizeWhitespaces($(root).text());
                 continue;
             }
