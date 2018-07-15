@@ -2,8 +2,7 @@
   "name": "3gpp-message-formatter-ran3",
   "main": "formatter.js",
   "dependencies": {
-    "cheerio": "^1.0.0-rc.2",
-    "xlsx": "^0.13.0"
+    "cheerio": "^1.0.0-rc.2"
   },
   "scripts": {
     "pkg-win": "npm run pkg-win-x64 && npm run pkg-win-x86",

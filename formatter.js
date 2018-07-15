@@ -221,31 +221,65 @@ function expand(definitions) {
 
 function toWorkbook(definitions) {
     var workbook = xlsx.utils.book_new();
+    workbook['Styles'] = {};
+    let style = workbook['Styles'];
+    style['Borders'] = [{}];
+    let borders = workbook['Styles']['Borders'];
+    borders.push({top: {style: "thin"}});
+    borders.push({left: {style: "thin"}});
+    borders.push({top: {style: "thin"}, left: {style: "thin"}});
+    style['CellXf'] = [{numFmtId: 0, fontId: 0, fillId: 0, borderId: 0,
+                        xfId: 0}];
+    let cellXf = style['CellXf'];
+    // 1: Top
+    cellXf.push({numFmtId: 0, fontId: 0, fillId: 0, borderId: 1, xfId: 0,
+                    applyBorder: true});
+    // 2: Left
+    cellXf.push({numFmtId: 0, fontId: 0, fillId: 0, borderId: 2, xfId: 0,
+                    applyBorder: true});
+    // 3: Top Left
+    cellXf.push({numFmtId: 0, fontId: 0, fillId: 0, borderId: 3, xfId: 0,
+                    applyBorder: true});
     for (let key in definitions) {
         let sectionNumber = key;
         let definition = definitions[sectionNumber];
         let name = definition['name'];
         let depthMax = definition['depthMax'] || 0;
         let worksheet_data = [];
+        let styles = {};
+        let rowNum = 1;
         worksheet_data.push([name]);
+        rowNum++;
         worksheet_data.push([null]);
+        rowNum++;
         for (let content of definition['content']) {
             if (!content) {
                 worksheet_data.push([null]);
+                rowNum++;
                 continue;
             }
             let depth = content['depth'];
             let row = [];
+            let k = 0;
             for (let elem of content['content']) {
                 row.push(elem);
+                if (!k) {
+                    styles[cellAddress(rowNum, depth + 1)] = 3;
+                } else {
+                    styles[cellAddress(rowNum, depthMax + k + 1)] = 1;
+                }
+                k++;
             }
             for (let i = 0; i < depth; i++) {
                 row.splice(0, 0, null);
+                styles[cellAddress(rowNum, i + 1)] = 2;
             }
             for (let i = 0; i < depthMax - depth; i++) {
                 row.splice(depth + 1, 0, null);
+                styles[cellAddress(rowNum, depth + 1 + i + 1)] = 1;
             }
             worksheet_data.push(row);
+            rowNum++;
         }
         if ('auxiliary' in definition) {
             for (let auxiliary of definition['auxiliary']) {
@@ -266,6 +300,12 @@ function toWorkbook(definitions) {
         worksheet['!cols'] = [];
         for (let i = 0; i < depthMax - 1; i ++) {
             worksheet['!cols'].push({wch: 3});
+        }
+        for (let cell in styles) {
+            if (!(cell in worksheet)) {
+                worksheet[cell] = {};
+            }
+            worksheet[cell]['s'] = styles[cell];
         }
         let sheetname = `${sectionNumber} ${name || ''}`.substring(0, 30)
                             .replace(/[\\\/?*\[\]]/g, '_');
@@ -356,6 +396,22 @@ function mergeAuxiliary(definition, dereferenced) {
             }
         }
     }
+}
+
+function cellAddress(r, c) {
+    let address = base26(c) + r;
+    return address;
+}
+
+// 1: A, 2: B, ..., 27: AA
+function base26(num) {
+    var c = [];
+    while (num) {
+        let r = num % 26;
+        c.splice(0, 0, String.fromCharCode('A'.charCodeAt(0) + r - 1));
+        num = (num - r) / 26;
+    }
+    return c.join('');
 }
 
 if (require.main == module) {
