@@ -223,23 +223,22 @@ function toWorkbook(definitions) {
     var workbook = xlsx.utils.book_new();
     workbook['Styles'] = {};
     let style = workbook['Styles'];
-    style['Borders'] = [{}];
-    let borders = workbook['Styles']['Borders'];
-    borders.push({top: {style: "thin"}});
-    borders.push({left: {style: "thin"}});
-    borders.push({top: {style: "thin"}, left: {style: "thin"}});
+    style['Fills'] = [{patternType: 'none'},
+                        {patternType: 'gray125'},
+                        {patternType: 'solid', fgColor: {theme: 0},
+                            bgColor: {indexed: 64}}];
+    style['Borders'] = [{},
+                        {top: {style: 'thin'}},
+                        {left: {style: 'thin'}},
+                        {top: {style: 'thin'}, left: {style: 'thin'}}];
     style['CellXf'] = [{numFmtId: 0, fontId: 0, fillId: 0, borderId: 0,
-                        xfId: 0}];
-    let cellXf = style['CellXf'];
-    // 1: Top
-    cellXf.push({numFmtId: 0, fontId: 0, fillId: 0, borderId: 1, xfId: 0,
-                    applyBorder: true});
-    // 2: Left
-    cellXf.push({numFmtId: 0, fontId: 0, fillId: 0, borderId: 2, xfId: 0,
-                    applyBorder: true});
-    // 3: Top Left
-    cellXf.push({numFmtId: 0, fontId: 0, fillId: 0, borderId: 3, xfId: 0,
-                    applyBorder: true});
+                        xfId: 0},
+                        {numFmtId: 0, fontId: 0, fillId: 2, borderId: 1,
+                        xfId: 0, applyBorder: true},
+                        {numFmtId: 0, fontId: 0, fillId: 2, borderId: 2,
+                        xfId: 0, applyBorder: true},
+                        {numFmtId: 0, fontId: 0, fillId: 2, borderId: 3,
+                        xfId: 0, applyBorder: true}];
     for (let key in definitions) {
         let sectionNumber = key;
         let definition = definitions[sectionNumber];
