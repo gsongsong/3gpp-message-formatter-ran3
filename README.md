@@ -10,6 +10,12 @@ git clone https://github.com/gsongsong/js-xlsx
 npm link js-xlsx
 ```
 
+## Installation
+
+```sh
+npm i third-gen-message-formatter-ran3
+```
+
 ## Usage
 
 - Save as a 3GPP specification document in a web page format (*.htm, *.html)
@@ -18,7 +24,7 @@ npm link js-xlsx
 ### Package
 
 ```js
-var format = require('./3gpp-message-formatter');
+var format = require('third-gen-message-formatter-ran3');
 var workbook = format(<config_file_name>);
 // var workbook = format('config');
 ```
@@ -31,8 +37,6 @@ node formatter <input_file>
 ```
 
 ## Limitations
-
-Current supported specification documents: RAN3 Application Protocol (36.4x3, 38.4x3 AP series)
 
 Currently, you need to handle manually some message/IE types which refer other specification documents
 

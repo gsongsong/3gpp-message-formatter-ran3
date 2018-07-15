@@ -1,5 +1,7 @@
 {
-  "name": "3gpp-message-formatter-ran3",
+  "name": "third-gen-message-formatter-ran3",
+  "version": "1.0.1",
+  "license": "GPL-3.0",
   "main": "formatter.js",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2"
