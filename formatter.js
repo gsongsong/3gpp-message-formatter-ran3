@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var $ = require('cheerio');
-var xlsx = require('xlsx');
+var xlsx = require('@gsongsong/xlsx');
 
 module.exports = exports = format;
 
