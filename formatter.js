@@ -298,7 +298,7 @@ function toWorkbook(definitions) {
         }
         let worksheet = xlsx.utils.aoa_to_sheet(worksheet_data);
         worksheet['!cols'] = [];
-        for (let i = 0; i < depthMax - 1; i ++) {
+        for (let i = 0; i < depthMax; i ++) {
             worksheet['!cols'].push({wch: 3});
         }
         for (let cell in styles) {
