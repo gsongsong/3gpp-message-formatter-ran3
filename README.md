@@ -5,9 +5,7 @@ It formats application protocol messages into tables
 ## Dependencies
 
 ```sh
-npm install cheerio
-git clone https://github.com/gsongsong/js-xlsx
-npm link js-xlsx
+npm install cheerio @gsongsong/xlsx
 ```
 
 ## Installation
