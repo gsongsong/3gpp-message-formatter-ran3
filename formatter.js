@@ -194,7 +194,7 @@ function expand(definitions) {
                 } else {
                     let expandAsIs = true;
                     if (hasOneRoot(contentToInsert) &&
-                            item[0] == contentToInsert[0][0]) {
+                            item[0] == contentToInsert[0]['content'][0]) {
                         expandAsIs = false;
                         mergeDefinition(content, i, contentToInsert[0]);
                         contentToInsert.splice(0, 1);
