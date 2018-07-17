@@ -12,7 +12,7 @@ function format(html) {
 }
 
 var reTagHeader = /h[1-6]/g;
-var reTagHeaderAlternative = /^\b([1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)\s+$/;
+var reTagHeaderAlternative = /^\b([1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)\s*?/;
 var reTagTable = /table/g
 var reReferenceNumber = /\b[1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*)\b/;
 var reReferenceNumberName = /\b([1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)/;
