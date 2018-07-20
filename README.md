@@ -1,12 +1,6 @@
 # 3GPP Message Formatter for RAN3
 
-It formats application protocol messages into tables
-
-## Dependencies
-
-```sh
-npm install cheerio @gsongsong/xlsx
-```
+It generates an Excel workbook for all 3GPP Applicaiton Protocol (AP; 36.4xx, 38.4xx) messages/IEs
 
 ## Installation
 
@@ -14,29 +8,30 @@ npm install cheerio @gsongsong/xlsx
 npm i third-gen-message-formatter-ran3
 ```
 
+### Dependencies
+
+If above doesn't install dependencies:
+
+```sh
+npm i cellref cheerio @gsongsong/xlsx
+```
+
+
 ## Usage
 
-- Save as a 3GPP specification document in a web page format (*.htm, *.html)
+- Convert 3GPP AP document into a web page format (*.htm, *.html)
    - Make sure that a web page is encoded in UTF-8
+
+### Command Line
+
+```sh
+node formatter <spec_file>
+# node formatter 38473-f11.htm
+```
 
 ### Package
 
 ```js
 var format = require('third-gen-message-formatter-ran3');
-var workbook = format(<html>);
+var workbook = format(html);
 ```
-
-### Command Line
-
-```sh
-node formatter <input_file>
-# node formatter 38473-f11.htm
-```
-
-## Limitations
-
-Currently, you need to handle manually some message/IE types which refer other specification documents
-
-## Contact
-
-Bug/Issue reporting: https://github.com/gsongsong/3gpp-message-formatter-ran3/issues
