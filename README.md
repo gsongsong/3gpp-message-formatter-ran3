@@ -23,8 +23,7 @@ npm i third-gen-message-formatter-ran3
 
 ```js
 var format = require('third-gen-message-formatter-ran3');
-var workbook = format(<config_file_name>);
-// var workbook = format('config');
+var workbook = format(<html>);
 ```
 
 ### Command Line
