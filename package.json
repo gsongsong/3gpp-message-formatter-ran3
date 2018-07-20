@@ -1,10 +1,11 @@
 {
   "name": "third-gen-message-formatter-ran3",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "license": "GPL-3.0",
   "main": "formatter.js",
   "dependencies": {
     "@gsongsong/xlsx": "^0.13.2",
+    "cellref": "^3.0.0",
     "cheerio": "^1.0.0-rc.2"
   },
   "scripts": {

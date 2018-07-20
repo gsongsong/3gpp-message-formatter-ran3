@@ -2,6 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var $ = require('cheerio');
 var xlsx = require('@gsongsong/xlsx');
+var cellref = require('cellref');
 
 module.exports = exports = format;
 
@@ -263,19 +264,19 @@ function toWorkbook(definitions) {
             for (let elem of content['content']) {
                 row.push(elem);
                 if (!k) {
-                    styles[cellAddress(rowNum, depth + 1)] = 3;
+                    styles[cellref.toA1(`R${rowNum}C${depth + 1}`)] = 3;
                 } else {
-                    styles[cellAddress(rowNum, depthMax + k + 1)] = 1;
+                    styles[cellref.toA1(`R${rowNum}C${depthMax + k + 1}`)] = 1;
                 }
                 k++;
             }
             for (let i = 0; i < depth; i++) {
                 row.splice(0, 0, null);
-                styles[cellAddress(rowNum, i + 1)] = 2;
+                styles[cellref.toA1(`R${rowNum}C${i + 1}`)] = 2;
             }
             for (let i = 0; i < depthMax - depth; i++) {
                 row.splice(depth + 1, 0, null);
-                styles[cellAddress(rowNum, depth + 1 + i + 1)] = 1;
+                styles[cellref.toA1(`R${rowNum}C${depth + 1 + i + 1}`)] = 1;
             }
             worksheet_data.push(row);
             rowNum++;
@@ -395,22 +396,6 @@ function mergeAuxiliary(definition, dereferenced) {
             }
         }
     }
-}
-
-function cellAddress(r, c) {
-    let address = base26(c) + r;
-    return address;
-}
-
-// 1: A, 2: B, ..., 27: AA
-function base26(num) {
-    var c = [];
-    while (num) {
-        let r = (num - 1) % 26;
-        c.splice(0, 0, String.fromCharCode('A'.charCodeAt(0) + r));
-        num = Math.floor((num - r) / 26);
-    }
-    return c.join('');
 }
 
 if (require.main == module) {
