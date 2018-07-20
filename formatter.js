@@ -406,9 +406,9 @@ function cellAddress(r, c) {
 function base26(num) {
     var c = [];
     while (num) {
-        let r = num % 26;
-        c.splice(0, 0, String.fromCharCode('A'.charCodeAt(0) + r - 1));
-        num = (num - r) / 26;
+        let r = (num - 1) % 26;
+        c.splice(0, 0, String.fromCharCode('A'.charCodeAt(0) + r));
+        num = Math.floor((num - r) / 26);
     }
     return c.join('');
 }
