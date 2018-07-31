@@ -4,7 +4,10 @@ var $ = require('cheerio');
 var xlsx = require('@gsongsong/xlsx');
 var cellref = require('cellref');
 
-module.exports = exports = format;
+exports.parse = parse;
+exports.expand = expand;
+exports.toWorkbook = toWorkbook;
+exports.format = format;
 
 function format(html) {
     var definitions = parse(html);

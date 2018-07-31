@@ -32,6 +32,6 @@ node formatter <spec_file>
 ### Package
 
 ```js
-var format = require('third-gen-message-formatter-ran3');
-var workbook = format(html);
+var formatter = require('third-gen-message-formatter-ran3');
+var workbook = formatter.format(html);
 ```
