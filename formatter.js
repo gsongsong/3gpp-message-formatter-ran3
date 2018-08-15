@@ -2,7 +2,8 @@ var fs = require('fs');
 var path = require('path');
 var $ = require('cheerio');
 var xlsx = require('@gsongsong/xlsx');
-var cellref = require('cellref');
+var addr = xlsx.utils.encode_cell;
+var cell = xlsx.utils.decode_cell;
 
 exports.parse = parse;
 exports.expand = expand;
@@ -223,26 +224,13 @@ function expand(definitions) {
     }
 }
 
+var fillWhite = {patternType: 'solid', fgColor: {rgb: 'FFFFFFFF'}}
+var borderTop = {top: {style: 'thin'}};
+var borderLeft = {left: {style: 'thin'}};
+var borderTopLeft = {top: {style: 'thin'}, left: {style: 'thin'}};
+
 function toWorkbook(definitions) {
     var workbook = xlsx.utils.book_new();
-    workbook['Styles'] = {};
-    let style = workbook['Styles'];
-    style['Fills'] = [{patternType: 'none'},
-                        {patternType: 'gray125'},
-                        {patternType: 'solid', fgColor: {theme: 0},
-                            bgColor: {indexed: 64}}];
-    style['Borders'] = [{},
-                        {top: {style: 'thin'}},
-                        {left: {style: 'thin'}},
-                        {top: {style: 'thin'}, left: {style: 'thin'}}];
-    style['CellXf'] = [{numFmtId: 0, fontId: 0, fillId: 0, borderId: 0,
-                        xfId: 0},
-                        {numFmtId: 0, fontId: 0, fillId: 2, borderId: 1,
-                        xfId: 0, applyBorder: true},
-                        {numFmtId: 0, fontId: 0, fillId: 2, borderId: 2,
-                        xfId: 0, applyBorder: true},
-                        {numFmtId: 0, fontId: 0, fillId: 2, borderId: 3,
-                        xfId: 0, applyBorder: true}];
     for (let key in definitions) {
         let sectionNumber = key;
         let definition = definitions[sectionNumber];
@@ -250,7 +238,7 @@ function toWorkbook(definitions) {
         let depthMax = definition['depthMax'] || 0;
         let worksheet_data = [];
         let styles = {};
-        let rowNum = 1;
+        let rowNum = 0;
         worksheet_data.push([name]);
         rowNum++;
         worksheet_data.push([null]);
@@ -267,19 +255,23 @@ function toWorkbook(definitions) {
             for (let elem of content['content']) {
                 row.push(elem);
                 if (!k) {
-                    styles[cellref.toA1(`R${rowNum}C${depth + 1}`)] = 3;
+                    styles[addr({c: depth, r: rowNum})] = {fill: fillWhite,
+                                                           border: borderTopLeft};
                 } else {
-                    styles[cellref.toA1(`R${rowNum}C${depthMax + k + 1}`)] = 1;
+                    styles[addr({c: depthMax + k, r: rowNum})] = {fill: fillWhite,
+                                                                  border: borderTop};
                 }
                 k++;
             }
             for (let i = 0; i < depth; i++) {
                 row.splice(0, 0, null);
-                styles[cellref.toA1(`R${rowNum}C${i + 1}`)] = 2;
+                styles[addr({c: i, r: rowNum})] = {fill: fillWhite,
+                                                   border: borderLeft};
             }
             for (let i = 0; i < depthMax - depth; i++) {
                 row.splice(depth + 1, 0, null);
-                styles[cellref.toA1(`R${rowNum}C${depth + 1 + i + 1}`)] = 1;
+                styles[addr({c: depth + i + 1, r: rowNum})] = {fill: fillWhite,
+                                                               border: borderTop};
             }
             worksheet_data.push(row);
             rowNum++;
@@ -308,7 +300,14 @@ function toWorkbook(definitions) {
             if (!(cell in worksheet)) {
                 worksheet[cell] = {};
             }
-            worksheet[cell]['s'] = styles[cell];
+        }
+        for (let address in styles) {
+            if ('fill' in styles[address]) {
+                xlsx.utils.set_fill(workbook, worksheet, cell(address), styles[address]['fill']);
+            }
+            if ('border' in styles[address]) {
+                xlsx.utils.set_border(workbook, worksheet, cell(address), styles[address]['border']);
+            }
         }
         let sheetname = `${sectionNumber} ${name || ''}`.substring(0, 30)
                             .replace(/[\\\/?*\[\]]/g, '_');
