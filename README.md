@@ -2,6 +2,12 @@
 
 It generates an Excel workbook for all 3GPP Applicaiton Protocol (AP; 36.4xx, 38.4xx) messages/IEs
 
+![](_assets/ex_HO_REQ.png)
+
+**Looking for [RAN2/RAN3 integrated binary][3gpp-message-formatter]?**
+
+[3gpp-message-formatter]: https://github.com/gsongsong/3gpp-message-formatter
+
 ## Installation
 
 ```sh
