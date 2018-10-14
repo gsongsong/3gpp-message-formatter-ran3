@@ -6,13 +6,13 @@ var addr = xlsx.utils.encode_cell;
 var cell = xlsx.utils.decode_cell;
 
 exports.parse = parse;
-exports.expand = expand;
+exports.expandAll = expandAll;
 exports.toWorkbook = toWorkbook;
-exports.format = format;
+exports.formatAll = formatAll;
 
-function format(html) {
+function formatAll(html) {
     var definitions = parse(html);
-    expand(definitions);
+    expandAll(definitions);
     return toWorkbook(definitions);
 }
 
@@ -163,7 +163,7 @@ function tableToJson(definitions, rows, header) {
     }
 }
 
-function expand(definitions) {
+function expandAll(definitions) {
     for (let key in definitions) {
         let sectionNumber = key;
         let definition = definitions[sectionNumber];
@@ -222,6 +222,10 @@ function expand(definitions) {
             }
         } while (unexpandedFieldExists);
     }
+}
+
+function expand() {
+    
 }
 
 var fillWhite = {patternType: 'solid', fgColor: {rgb: 'FFFFFFFF'}}
@@ -406,7 +410,7 @@ if (require.main == module) {
         let html = fs.readFileSync(path.resolve(process.cwd(), filename['dir'],
                                                 filename['base']),
                                     'utf8');
-        xlsx.writeFile(format(html), `${filename['name']}.xlsx`);
+        xlsx.writeFile(formatAll(html), `${filename['name']}.xlsx`);
     } else {
         console.log('Usage: node formatter <file_name>');
         console.log('  ex : node formatter 38473-f11.htm');
