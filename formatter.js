@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path');
+var ArgumentParser = require('argparse').ArgumentParser;
 var $ = require('cheerio');
 var xlsx = require('@gsongsong/xlsx');
 var addr = xlsx.utils.encode_cell;
@@ -401,14 +402,18 @@ function mergeAuxiliary(definition, dereferenced) {
 }
 
 if (require.main == module) {
-    if (process.argv.length >= 3) {
-        let filename = path.parse(process.argv[2]);
-        let html = fs.readFileSync(path.resolve(process.cwd(), filename['dir'],
-                                                filename['base']),
-                                    'utf8');
-        xlsx.writeFile(format(html), `${filename['name']}.xlsx`);
-    } else {
-        console.log('Usage: node formatter <file_name>');
-        console.log('  ex : node formatter 38473-f11.htm');
+    let argParser = new ArgumentParser({addHelp: true, debug: true});
+    argParser.addArgument('specFile', {help: 'Specification file name'});
+    let args = {};
+    try {
+        args = argParser.parseArgs();
+    } catch (e) {
+        argParser.printHelp();
+        process.exit();
     }
+    let filename = path.parse(args.specFile);
+    let html = fs.readFileSync(path.resolve(process.cwd(), filename['dir'],
+                                            filename['base']),
+                                'utf8');
+    xlsx.writeFile(format(html), `${filename['name']}.xlsx`);
 }
