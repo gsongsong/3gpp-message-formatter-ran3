@@ -11,9 +11,9 @@ exports.expand = expand;
 exports.toWorkbook = toWorkbook;
 exports.format = format;
 
-function format(html) {
+function format(html, raw = false) {
     var definitions = parse(html);
-    expand(definitions);
+    expand(definitions, raw);
     return toWorkbook(definitions);
 }
 
@@ -164,7 +164,7 @@ function tableToJson(definitions, rows, header) {
     }
 }
 
-function expand(definitions) {
+function expand(definitions, raw = false) {
     for (let key in definitions) {
         let sectionNumber = key;
         let definition = definitions[sectionNumber];
@@ -183,7 +183,7 @@ function expand(definitions) {
                     continue;
                 }
                 let referenceMatch = reference.match(reReferenceNumber);
-                if (!referenceMatch) {
+                if (!referenceMatch || raw) {
                     continue;
                 }
                 let referenceNumber = referenceMatch[0];
@@ -404,6 +404,8 @@ function mergeAuxiliary(definition, dereferenced) {
 if (require.main == module) {
     let argParser = new ArgumentParser({addHelp: true, debug: true});
     argParser.addArgument('specFile', {help: 'Specification file name'});
+    argParser.addArgument(['-r', '--raw'], {help: 'Do not expand sub IEs',
+                                            action: 'storeTrue'});
     let args = {};
     try {
         args = argParser.parseArgs();
@@ -415,5 +417,5 @@ if (require.main == module) {
     let html = fs.readFileSync(path.resolve(process.cwd(), filename['dir'],
                                             filename['base']),
                                 'utf8');
-    xlsx.writeFile(format(html), `${filename['name']}.xlsx`);
+    xlsx.writeFile(format(html, args.raw), `${filename['name']}.xlsx`);
 }
