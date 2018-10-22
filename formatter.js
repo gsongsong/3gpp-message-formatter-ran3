@@ -7,14 +7,13 @@ var addr = xlsx.utils.encode_cell;
 var cell = xlsx.utils.decode_cell;
 
 exports.parse = parse;
-exports.expandAll = expandAll;
+exports.expand = expand;
 exports.toWorkbook = toWorkbook;
-exports.formatAll = formatAll;
+exports.format = format;
 
-function formatAll(html, raw = false) {
-    var definitions = parse(html);
-    expandAll(definitions, raw);
-    return toWorkbook(definitions);
+function format(messageIEname, definitions, raw = false) {
+    expand(messageIEname, definitions, raw);
+    return toWorkbook(messageIEname, definitions);
 }
 
 var reTagHeader = /h[1-6]/g;
@@ -164,10 +163,13 @@ function tableToJson(definitions, rows, header) {
     }
 }
 
-function expandAll(definitions, raw = false) {
+function expand(messageIEname, definitions, raw = false) {
     for (let key in definitions) {
         let sectionNumber = key;
         let definition = definitions[sectionNumber];
+        if (messageIEname != '__all' && messageIEname != definition['name']) {
+                continue;
+        }
         if (definition['separate']) {
             continue;
         }
@@ -225,21 +227,20 @@ function expandAll(definitions, raw = false) {
     }
 }
 
-function expand() {
-    
-}
-
 var fillWhite = {patternType: 'solid', fgColor: {rgb: 'FFFFFFFF'}}
 var borderTop = {top: {style: 'thin'}};
 var borderLeft = {left: {style: 'thin'}};
 var borderTopLeft = {top: {style: 'thin'}, left: {style: 'thin'}};
 
-function toWorkbook(definitions) {
+function toWorkbook(messageIEname, definitions) {
     var workbook = xlsx.utils.book_new();
     for (let key in definitions) {
         let sectionNumber = key;
         let definition = definitions[sectionNumber];
         let name = definition['name'];
+        if (messageIEname != '__all' && messageIEname != name) {
+            continue;
+        }
         let depthMax = definition['depthMax'] || 0;
         let worksheet_data = [];
         let styles = {};
@@ -408,6 +409,8 @@ function mergeAuxiliary(definition, dereferenced) {
 if (require.main == module) {
     let argParser = new ArgumentParser({addHelp: true, debug: true});
     argParser.addArgument('specFile', {help: 'Specification file name'});
+    argParser.addArgument('messageIEname', {nargs: '*', defaultValue: '__all',
+                                            help: 'Message or IE name'});
     argParser.addArgument(['-r', '--raw'], {help: 'Do not expand sub IEs',
                                             action: 'storeTrue'});
     let args = {};
@@ -421,5 +424,17 @@ if (require.main == module) {
     let html = fs.readFileSync(path.resolve(process.cwd(), filename['dir'],
                                             filename['base']),
                                 'utf8');
-    xlsx.writeFile(formatAll(html, args.raw), `${filename['name']}.xlsx`);
+    let definitions = parse(html);
+    let outputFilenameArr = [];
+    if (args.messageIEname != '__all') {
+        outputFilenameArr.push(args.messageIEname);
+    }
+    outputFilenameArr.push(filename['name']);
+    if (args.raw) {
+        outputFilenameArr.push('raw');
+    }
+    let formatted = format(args.messageIEname, definitions, args.raw);
+    if (formatted) {
+        xlsx.writeFile(formatted, `${outputFilenameArr.join('-')}.xlsx`);
+    }
 }
