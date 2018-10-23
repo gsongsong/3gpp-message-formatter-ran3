@@ -5,8 +5,11 @@ var xlsx = require('@gsongsong/xlsx');
 var parseAndExpand = require('./lib/parseAndExpand');
 var toWorkbook = require('./lib/formatXlsx').toWorkbook;
 
-exports.parse = parse = parseAndExpand.parse;
-exports.expand = expand = parseAndExpand.expand;
+var parse = parseAndExpand.parse;
+var expand = parseAndExpand.expand;
+
+exports.parse = parse;
+exports.expand = expand;
 exports.toWorkbook = toWorkbook;
 exports.format = format;
 
