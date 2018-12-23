@@ -1,6 +1,6 @@
 {
   "name": "third-gen-message-formatter-ran3",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "license": "GPL-3.0",
   "main": "formatter.js",
   "dependencies": {
