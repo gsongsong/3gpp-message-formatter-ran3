@@ -1,8 +1,5 @@
 var $ = require('cheerio');
 
-exports.parse = parse;
-exports.expand = expand;
-
 var reTagHeader = /h[1-6]/g;
 var reTagHeaderAlternative = /^\b([1-9A-Z]\d*(\.[1-9]\d*)*(\.[1-9]\d*\w*))\b\s+(.*)\s*?/;
 var reTagTable = /table/g
@@ -15,7 +12,7 @@ var reCause = /Cause/gi;
 
 var reForSeparateSheets = [reCause];
 
-function parse(html) {
+export function parse(html) {
     let definitions = {};
     let lastHeader = null;
     let deque = [$(html)];
@@ -61,7 +58,7 @@ function parse(html) {
     return definitions;
 }
 
-function expand(messageIEname, definitions, raw = false) {
+export function expand(messageIEname, definitions, raw = false) {
     for (let key in definitions) {
         let sectionNumber = key;
         let definition = definitions[sectionNumber];

@@ -2,14 +2,12 @@ var xlsx = require('@gsongsong/xlsx');
 var addr = xlsx.utils.encode_cell;
 var cell = xlsx.utils.decode_cell;
 
-exports.toWorkbook = toWorkbook;
-
 var fillWhite = {patternType: 'solid', fgColor: {rgb: 'FFFFFFFF'}}
 var borderTop = {top: {style: 'thin'}};
 var borderLeft = {left: {style: 'thin'}};
 var borderTopLeft = {top: {style: 'thin'}, left: {style: 'thin'}};
 
-function toWorkbook(messageIEname, definitions) {
+export function toWorkbook(messageIEname, definitions) {
     var workbook = xlsx.utils.book_new();
     for (let key in definitions) {
         let sectionNumber = key;

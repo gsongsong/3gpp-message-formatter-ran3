@@ -1,6 +1,6 @@
 {
   "name": "third-gen-message-formatter-ran3",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "license": "GPL-3.0",
   "main": "formatter.js",
   "dependencies": {
@@ -13,5 +13,8 @@
     "pkg-win": "npm run pkg-win-x64 && npm run pkg-win-x86",
     "pkg-win-x64": "pkg formatter.js -t node6-win-x64 -o formatter-x64.exe",
     "pkg-win-x86": "pkg formatter.js -t node6-win-x86 -o formatter-x86.exe"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.21"
   }
 }
