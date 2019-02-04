@@ -1,7 +1,6 @@
 var fs = require('fs');
 var path = require('path');
 var ArgumentParser = require('argparse').ArgumentParser;
-var xlsx = require('@gsongsong/xlsx');
 var parseAndExpand = require('./lib/parseAndExpand');
 var toWorkbook = require('./lib/formatXlsx').toWorkbook;
 
@@ -47,6 +46,6 @@ if (require.main == module) {
     }
     let formatted = format(args.messageIEname, definitions, args.raw);
     if (formatted) {
-        xlsx.writeFile(formatted, `${outputFilenameArr.join('-')}.xlsx`);
+        formatted.write(`${outputFilenameArr.join('-')}.xlsx`);
     }
 }

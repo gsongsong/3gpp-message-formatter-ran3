@@ -1,13 +1,14 @@
 {
   "name": "third-gen-message-formatter-ran3",
-  "version": "1.3.1",
+  "version": "1.3.3",
   "license": "GPL-3.0",
-  "main": "formatter.js",
+  "main": "dist/formatter.js",
   "dependencies": {
     "@gsongsong/xlsx": "^0.13.4",
     "argparse": "^1.0.10",
     "cellref": "^3.0.0",
-    "cheerio": "^1.0.0-rc.2"
+    "cheerio": "^1.0.0-rc.2",
+    "excel4node": "^1.7.0"
   },
   "scripts": {
     "pkg-win": "npm run pkg-win-x64 && npm run pkg-win-x86",
