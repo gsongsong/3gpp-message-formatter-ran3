@@ -19,7 +19,7 @@ npm i third-gen-message-formatter-ran3
 If above doesn't install dependencies:
 
 ```sh
-npm i cellref cheerio @gsongsong/xlsx
+npm i cellref cheerio excel4node
 ```
 
 
