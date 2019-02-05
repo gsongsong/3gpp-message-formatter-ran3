@@ -26,7 +26,11 @@ export function toWorkbook(messageIEname, definitions) {
         }
         let sheetname = `${sectionNumber} ${name || ''}`.substring(0, 30)
                             .replace(/[\\\/?*\[\]]/g, '_');
-        let ws = workbook.addWorksheet(sheetname);
+        let ws = workbook.addWorksheet(sheetname, {
+            outline: {
+                summaryBelow: false
+            }
+        });
         let depthMax = definition['depthMax'] || 0;
         for (let i = 0; i < depthMax; i ++) {
             ws.column(i + 1).setWidth(3);
@@ -61,6 +65,11 @@ export function toWorkbook(messageIEname, definitions) {
                     fill: fillWhite,
                     border: borderTop
                 });
+            }
+            if (depth >= 1) {
+                if (ws.row(rowNum).outlineLevel === null ) {
+                    ws.row(rowNum).group(Math.min(depth, 7));
+                }
             }
             rowNum++;
         }
