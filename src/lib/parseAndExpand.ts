@@ -133,6 +133,7 @@ function tableToJson(definitions, rows, header) {
     let sectionNumber = matchResult[1];
     let sectionName = matchResult[4];
     let content = [];
+    let depthMin = Infinity;
     let depthMax = 0;
     let tableType = 'definition';
     $(rows).each(function(idxRow, row) {
@@ -161,12 +162,15 @@ function tableToJson(definitions, rows, header) {
                     }
                 }
             }
-            if (idxCell == 0) {
+            if (idxCell == 0 && idxRow > 0) {
                 let matchBracket = tdText.match(/^>+/);
                 if (matchBracket) {
                     rowContent['depth'] = matchBracket[0].length;
+                    depthMin = Math.min(depthMin, rowContent['depth']);
                     depthMax = Math.max(depthMax, rowContent['depth']);
                     tdText = tdText.replace(/^>+/, '');
+                } else {
+                    depthMin = 0;
                 }
             }
             rowContent['content'].push(tdText);
@@ -176,6 +180,10 @@ function tableToJson(definitions, rows, header) {
             return false;
         }
     });
+    depthMax -= depthMin;
+    for (let rowContent of content) {
+        rowContent['depth'] -= depthMin;
+    }
     if (tableType == 'definition') {
         definitions[sectionNumber] = {
             name: sectionName,
